@@ -1,7 +1,7 @@
 import telebot
 from telebot import types
 
-bot = telebot.TeleBot("ТВОЙ_ТОКЕН_БОТА")
+bot = telebot.TeleBot("8610879721:AAFGQvJIBJXbKvASlRsEzNAiu1ga3I5TdhI")
 
 @bot.message_handler(commands=['start', 'panel'])
 def welcome(message):
